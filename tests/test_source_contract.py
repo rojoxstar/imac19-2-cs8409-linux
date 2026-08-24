@@ -13,9 +13,32 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE_PATH = ROOT / "driver/source/cs8409.c"
 HEADER_PATH = ROOT / "driver/source/cs8409.h"
 TABLES_PATH = ROOT / "driver/source/cs8409-tables.c"
+D12_PATCH_PATH = ROOT / "diagnostics/d12-coef0-rmw-logging.patch"
 SOURCE = SOURCE_PATH.read_text(encoding="utf-8")
 HEADER = HEADER_PATH.read_text(encoding="utf-8")
 TABLES = TABLES_PATH.read_text(encoding="utf-8")
+
+
+def d12_patch_text() -> str:
+    if not D12_PATCH_PATH.is_file():
+        raise AssertionError(f"D12 patch artifact missing: {D12_PATCH_PATH}")
+    return D12_PATCH_PATH.read_text(encoding="utf-8")
+
+
+def d12_added_lines() -> list[str]:
+    return [
+        line[1:]
+        for line in d12_patch_text().splitlines()
+        if line.startswith("+") and not line.startswith("+++")
+    ]
+
+
+def d12_removed_lines() -> list[str]:
+    return [
+        line[1:]
+        for line in d12_patch_text().splitlines()
+        if line.startswith("-") and not line.startswith("---")
+    ]
 
 
 def digest(path: Path) -> str:
@@ -136,6 +159,60 @@ class V10Contracts(unittest.TestCase):
     def test_no_speculative_devcfg1_restore(self) -> None:
         imac_tdm = function_body("imac_cs8409_tdm_setup_amps12")
         self.assertNotIn("imac_cs8409_coef_write(codec, 0x0000", imac_tdm)
+
+
+class D12DiagnosticContracts(unittest.TestCase):
+    """Contracts for the offline D12 patch artifact; never accesses hardware."""
+
+    def test_tracked_production_source_has_no_d12_logging(self) -> None:
+        self.assertNotIn("iMac D12 diag:", SOURCE)
+
+    def test_d12_patch_targets_exactly_one_file(self) -> None:
+        headers = [
+            line
+            for line in d12_patch_text().splitlines()
+            if line.startswith(("--- a/", "+++ b/"))
+        ]
+        self.assertEqual(
+            headers,
+            ["--- a/driver/source/cs8409.c", "+++ b/driver/source/cs8409.c"],
+        )
+
+    def test_d12_patch_removals_are_exactly_the_v10_rmw_block(self) -> None:
+        self.assertEqual(
+            d12_removed_lines(),
+            [
+                "\tguard(mutex)(&spec->i2c_mux);",
+                "\tif (spec->i2c_clck_enabled) {",
+                "\t\tcs8409_vendor_coef_set(spec->codec, 0x0,",
+                "\t\t\t       cs8409_vendor_coef_get(spec->codec, 0x0) & 0xfffffff7);",
+                "\t\tspec->i2c_clck_enabled = 0;",
+            ],
+        )
+
+    def test_d12_patch_never_touches_the_enable_path(self) -> None:
+        touched = d12_added_lines() + d12_removed_lines()
+        for line in touched:
+            self.assertNotIn("cs8409_enable_i2c_clock", line)
+        joined = "\n".join(d12_added_lines())
+        self.assertNotIn("| 0x8", joined)
+
+    def test_d12_patch_keeps_get_mask_order_without_logging_between(self) -> None:
+        added = "\n".join(d12_added_lines())
+        get_pos = added.index("coef_old = cs8409_vendor_coef_get(spec->codec, 0x0);")
+        mask_pos = added.index("coef_new = coef_old & 0xfffffff7;")
+        set_pos = added.index("cs8409_vendor_coef_set(spec->codec, 0x0, coef_new);")
+        log_pos = added.index('"iMac D12 diag: disable-path coef0 old=0x%08x new=0x%08x\\n"')
+        self.assertLess(get_pos, mask_pos)
+        self.assertLess(mask_pos, set_pos)
+        self.assertGreater(log_pos, set_pos)
+
+    def test_d12_patch_is_exact_model_only_and_uses_codec_info(self) -> None:
+        added = "\n".join(d12_added_lines())
+        self.assertIn("codec->fixup_id == CS8409_FIXUP_IMAC19_2", added)
+        self.assertNotIn("cs8409_is_imac_amp", added)
+        self.assertIn("codec_info(codec,", added)
+        self.assertNotIn("codec_dbg(", added)
 
 
 if __name__ == "__main__":
