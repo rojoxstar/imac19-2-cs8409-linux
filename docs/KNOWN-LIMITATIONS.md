@@ -12,12 +12,16 @@
 
 ## Evidence limitations
 
-- Exact TAS5764L `reg08` bit semantics are unknown.
+- Exact TAS5764L `reg08` bit semantics are unknown. TAS5722L is an unusually
+  close public register/default/package comparator and defines bit 3 as
+  serial-audio clock error or shutdown-time high state, but it remains
+  non-authoritative for TAS5764L.
 - Electrical state after an arbitrary partial TAS failure cannot be proven.
 - Two side-device identities/register semantics remain incomplete; their
   known-good operations are retained and failures remain fatal.
 - CS8409 vendor-coefficient retention across system S3 is not fully
-  documented.
+  documented. The exact iMac INIT does not reconstruct a complete `DEV_CFG1`;
+  its existing I2C clock helper only performs a bit-3 read/modify/write.
 - A successful I2C acknowledgement validates transport completion only.
 
 ## Operational mitigation

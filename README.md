@@ -52,7 +52,7 @@ byte level even when the source and `srcversion` match.
 - Capture has not received equivalent release qualification.
 - TAS5764L register semantics are incomplete; related TAS parts are not an
   authoritative substitute.
-- Four side-device operations are retained from machine-proven behavior even
+- Side-device operations are retained from machine-proven behavior even
   where exact public register semantics are unavailable.
 
 See [Known limitations](docs/KNOWN-LIMITATIONS.md) and the
@@ -102,11 +102,25 @@ system S3.
 
 ## Research status
 
-Claims in this repository use four evidence labels:
+The Phase 20 research set is the current unknown-state map:
 
-- **PROVEN** — exact source, exact package mapping, or deterministic trace;
-- **OBSERVED** — reproduced machine behavior;
-- **INFERRED** — an evidence-supported hypothesis, not established causality;
+- [ranked root-cause hypotheses](docs/RESEARCH-HYPOTHESES.md);
+- [observation/evidence matrix](docs/S3-EVIDENCE-MATRIX.md);
+- [CS8409 clock and PM research](docs/CS8409-CLOCK-RESEARCH.md);
+- [TAS5764L comparative research](docs/TAS5764L-RESEARCH.md);
+- [exact/derived audio topology](docs/IMAC19-2-AUDIO-TOPOLOGY.md);
+- [safe next experiments](docs/NEXT-EXPERIMENTS.md);
+- [ranked open questions](docs/OPEN-QUESTIONS.md).
+
+Significant research claims use six evidence labels:
+
+- **PROVEN** — exact source, exact package mapping, deterministic trace, or a
+  recorded physical outcome;
+- **STRONG EVIDENCE** — independent evidence converges but one exact semantic
+  or direct measurement is missing;
+- **CONSISTENT** — compatible with the facts but weakly discriminated;
+- **WEAK EVIDENCE** — indirect, cross-model or community support only;
+- **SPECULATIVE** — technically possible without direct support;
 - **UNKNOWN** — evidence is insufficient.
 
 V11 diagnostic work and the bounded trace methodology live under

@@ -88,8 +88,15 @@ Linux request in both cases:       0x18
 ```
 
 The all-four change is the strongest observed differential. Exact TAS5764L
-meaning is unknown. Related TAS5760L clock-error documentation is
-non-authoritative analogy only.
+meaning is unknown.
+
+Phase 20 found a much closer public comparator than TAS5760L: TI's documented
+TAS5722L package, TDM behavior, touched-register map and every boot default
+match the Apple sequence. On TAS5722L, register `0x08` bit 3 is read-only
+serial-audio clock-error status; it also reads high while the device is in
+shutdown. This is **STRONG COMPARATIVE EVIDENCE** for a common clock-or-shutdown
+state, not TAS5764L authority and not a write basis. See
+[TAS5764L-RESEARCH.md](TAS5764L-RESEARCH.md).
 
 ## DEV_CFG1 evidence
 
@@ -104,6 +111,11 @@ CS8409 coefficient 0x00 <- 0x9008
 Cirrus annotations describe PLL1/PLL2/I2C enable followed by PLL2 disable.
 Linux’s iMac INIT omits a complete coefficient-0x00 restore while replaying
 downstream ASP/TAS state.
+
+Precise source qualification: V10 does access coefficient 0 during ordinary
+I2C clock gating. It reads/modifies only bit 3 and preserves the other bits it
+finds. It therefore cannot reconstruct PLL/vendor bits that were already lost.
+Do not describe this as “V10 never writes coefficient 0.”
 
 ## Why no V12 was created
 
@@ -140,11 +152,31 @@ Do not blindly copy the Windows values into Linux.
 
 Only after explicit authorization:
 
-1. Can software-only evidence establish the exact CS8409 clock/PLL state lost
-   across S3 without adding a coefficient selector/read?
-2. Can an exact TAS5764L register definition establish `reg08` bit 3?
-3. Can existing codec/controller tracepoints narrow converter-to-ASP delivery
-   without MMIO or behavior changes?
+1. Log the coefficient-0 value **already read** by normal I2C-clock gating,
+   before its existing bit-3 RMW; add no hardware transaction.
+2. Phase-tag already-existing GPIO data/mask/direction and TAS readbacks to
+   distinguish logical restore from physical clock/shutdown state.
+3. Use bounded existing HDA command/response tracepoints to confirm ordinary
+   converter verbs without issuing a new verb.
+4. Continue searching for exact TAS5764L authority; TAS5722L remains related
+   evidence only.
 
 If those questions cannot establish one safe restore, retain V10 and keep S3
 unsupported.
+
+## Phase 20 ranking
+
+1. **HIGH:** shared CS8409-to-amplifier serial-audio clock/state absent after
+   S3; incomplete `DEV_CFG1`/PLL prerequisite restoration is the leading
+   source-based mechanism.
+2. **MEDIUM:** common GPIO4/SDZ is still asserted or electrically ineffective,
+   despite the correct-looking CS8409 GPIO latch.
+3. **LOW–MEDIUM:** converter/vendor routing or another ASP/pad prerequisite
+   downstream of controller DMA.
+4. **LOW:** common platform power resource or zero-valued sample payload.
+5. **VERY LOW:** side devices, CS42L83 direct speaker path, controller stall,
+   or four independent amplifier failures.
+
+These bands overlap and are prioritization, not calibrated probabilities. The
+complete matrices are in [RESEARCH-HYPOTHESES.md](RESEARCH-HYPOTHESES.md) and
+[S3-EVIDENCE-MATRIX.md](S3-EVIDENCE-MATRIX.md). No fix is authorized.
