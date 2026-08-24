@@ -1,0 +1,5 @@
+# Literal patch payloads contain diff markers that are not repository whitespace.
+*.patch -whitespace
+
+# Preserve this exact upstream build-support header byte-for-byte.
+driver/common/hda_local.h -whitespace

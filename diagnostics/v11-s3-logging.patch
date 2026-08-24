@@ -1,0 +1,439 @@
+--- a/driver/source/cs8409.c
++++ b/driver/source/cs8409.c
+@@ -537,7 +537,68 @@
+ 
+ 
+ 
+-static int imac_tdm_extra_sync_setup(struct hda_codec *codec)
++#define IMAC_V11_TAS_READ_POWER		BIT(0)
++#define IMAC_V11_TAS_READ_DIGITAL	BIT(1)
++#define IMAC_V11_TAS_READ_CHANNEL	BIT(2)
++#define IMAC_V11_TAS_READ_VOLUME	BIT(3)
++#define IMAC_V11_TAS_READ_ANALOG		BIT(4)
++#define IMAC_V11_TAS_READ_CONFIG		BIT(5)
++#define IMAC_V11_TAS_READ_ALL		GENMASK(5, 0)
++
++#define IMAC_V11_SIDE_READ_64_14		BIT(0)
++#define IMAC_V11_SIDE_READ_28_05		BIT(1)
++#define IMAC_V11_SIDE_READ_28_04		BIT(2)
++#define IMAC_V11_SIDE_READ_ALL		GENMASK(2, 0)
++
++#define IMAC_V11_PREP_READ_COEF01_BEGIN	BIT(0)
++#define IMAC_V11_PREP_READ_GPIO		BIT(1)
++#define IMAC_V11_PREP_READ_COEF01_END	BIT(2)
++#define IMAC_V11_PREP_READ_ALL		GENMASK(2, 0)
++
++enum imac_v11_dac_validation {
++	IMAC_V11_DAC_UNAVAILABLE,
++	IMAC_V11_DAC_INVALID,
++	IMAC_V11_DAC_RESTORED,
++	IMAC_V11_DAC_RESTORE_MISMATCH,
++};
++
++struct imac_v11_tas_snapshot {
++	unsigned int power;
++	unsigned int digital;
++	unsigned int channel;
++	unsigned int volume;
++	unsigned int analog;
++	unsigned int config;
++	unsigned int valid;
++};
++
++struct imac_v11_prepare_diag {
++	unsigned int channels;
++	unsigned int rate;
++	snd_pcm_format_t pcm_format;
++	unsigned int stream_tag;
++	unsigned int hda_format;
++	int init_error;
++	unsigned int active_streams;
++	unsigned int playback_started;
++	unsigned int coef01_begin;
++	unsigned int gpio;
++	unsigned int coef01_end;
++	unsigned int prepare_read_valid;
++	struct imac_v11_tas_snapshot tas[4];
++	unsigned int side64_14;
++	unsigned int side28_05;
++	unsigned int side28_04;
++	unsigned int side_read_valid;
++	unsigned int dac02_stream;
++	unsigned int dac02_format;
++	unsigned int dac03_stream;
++	unsigned int dac03_format;
++	enum imac_v11_dac_validation dac_validation;
++};
++
++static int imac_tdm_extra_sync_setup(struct hda_codec *codec,
++				     struct imac_v11_prepare_diag *diag)
+ {
+ 	struct sub_codec dev;
+ 	int ret;
+@@ -559,6 +620,10 @@
+ 	ret = cs8409_i2c_read(&dev, 0x0014);
+ 	if (ret < 0)
+ 		return ret;
++	if (diag) {
++		diag->side64_14 = ret;
++		diag->side_read_valid |= IMAC_V11_SIDE_READ_64_14;
++	}
+ 	codec_dbg(codec, "TDM DEV 0x64 READ BACK 0x0014 = 0x%x\n", ret);
+ 
+ 	memset(&dev, 0, sizeof(dev));
+@@ -576,6 +641,10 @@
+ 	ret = cs8409_i2c_read(&dev, 0x0005);
+ 	if (ret < 0)
+ 		return ret;
++	if (diag) {
++		diag->side28_05 = ret;
++		diag->side_read_valid |= IMAC_V11_SIDE_READ_28_05;
++	}
+ 	codec_dbg(codec, "TDM DEV 0x28 READ BACK 0x0005 = 0x%x\n", ret);
+ 
+ 	ret = cs8409_i2c_write(&dev, 0x0004, 0x0051);
+@@ -586,6 +655,10 @@
+ 	ret = cs8409_i2c_read(&dev, 0x0004);
+ 	if (ret < 0)
+ 		return ret;
++	if (diag) {
++		diag->side28_04 = ret;
++		diag->side_read_valid |= IMAC_V11_SIDE_READ_28_04;
++	}
+ 	codec_dbg(codec, "TDM DEV 0x28 READ BACK 0x0004 = 0x%x\n", ret);
+ 
+ 	codec_info(codec, "iMac extra TDM sync setup end\n");
+@@ -718,7 +791,8 @@
+ 	return 0;
+ }
+ 
+-static int imac_tas576_tdm_slot_setup(struct hda_codec *codec)
++static int imac_tas576_tdm_slot_setup(struct hda_codec *codec,
++				      struct imac_v11_prepare_diag *diag)
+ {
+ 	const struct imac_tas5764_model_config *model = imac_tas5764_model(codec);
+ 	struct sub_codec amp;
+@@ -784,31 +858,55 @@
+ 		ret = cs8409_i2c_read(&amp, 0x0001);
+ 		if (ret < 0)
+ 			return ret;
++		if (diag) {
++			diag->tas[i].power = ret;
++			diag->tas[i].valid |= IMAC_V11_TAS_READ_POWER;
++		}
+ 		codec_dbg(codec, "TAS5764L 0x%x READ BACK 0x0001 POWER = 0x%x\n", amp.addr, ret);
+ 
+ 		ret = cs8409_i2c_read(&amp, 0x0002);
+ 		if (ret < 0)
+ 			return ret;
++		if (diag) {
++			diag->tas[i].digital = ret;
++			diag->tas[i].valid |= IMAC_V11_TAS_READ_DIGITAL;
++		}
+ 		codec_dbg(codec, "TAS5764L 0x%x READ BACK 0x0002 DIGITAL = 0x%x\n", amp.addr, ret);
+ 
+ 		ret = cs8409_i2c_read(&amp, 0x0003);
+ 		if (ret < 0)
+ 			return ret;
++		if (diag) {
++			diag->tas[i].channel = ret;
++			diag->tas[i].valid |= IMAC_V11_TAS_READ_CHANNEL;
++		}
+ 		codec_dbg(codec, "TAS5764L 0x%x READ BACK 0x0003 CHANNEL_SELECT = 0x%x\n", amp.addr, ret);
+ 
+ 		ret = cs8409_i2c_read(&amp, 0x0004);
+ 		if (ret < 0)
+ 			return ret;
++		if (diag) {
++			diag->tas[i].volume = ret;
++			diag->tas[i].valid |= IMAC_V11_TAS_READ_VOLUME;
++		}
+ 		codec_dbg(codec, "TAS5764L 0x%x READ BACK 0x0004 DIGITAL_VOLUME = 0x%x\n", amp.addr, ret);
+ 
+ 		ret = cs8409_i2c_read(&amp, 0x0006);
+ 		if (ret < 0)
+ 			return ret;
++		if (diag) {
++			diag->tas[i].analog = ret;
++			diag->tas[i].valid |= IMAC_V11_TAS_READ_ANALOG;
++		}
+ 		codec_dbg(codec, "TAS5764L 0x%x READ BACK 0x0006 ANALOG = 0x%x\n", amp.addr, ret);
+ 
+ 		ret = cs8409_i2c_read(&amp, 0x0008);
+ 		if (ret < 0)
+ 			return ret;
++		if (diag) {
++			diag->tas[i].config = ret;
++			diag->tas[i].valid |= IMAC_V11_TAS_READ_CONFIG;
++		}
+ 		codec_dbg(codec, "TAS5764L 0x%x READ BACK 0x0008 CONFIG_ERROR = 0x%x\n", amp.addr, ret);
+ 	}
+ 
+@@ -1626,13 +1724,13 @@
+ 		return ret;
+ 	}
+ 
+-	ret = imac_tas576_tdm_slot_setup(codec);
++	ret = imac_tas576_tdm_slot_setup(codec, NULL);
+ 	if (ret) {
+ 		codec_err(codec, "iMac TAS channel configuration failed: %d\n", ret);
+ 		return ret;
+ 	}
+ 
+-	ret = imac_tdm_extra_sync_setup(codec);
++	ret = imac_tdm_extra_sync_setup(codec, NULL);
+ 	if (ret) {
+ 		codec_err(codec, "iMac required legacy I2C sequence failed: %d\n", ret);
+ 		return ret;
+@@ -1971,7 +2069,8 @@
+  * Raw verb writes are restored to the same values cached by the HDA core, so
+  * the core's converter cache remains coherent.
+  */
+-static void imac_sync_4ch_converters(struct hda_codec *codec)
++static void imac_sync_4ch_converters(struct hda_codec *codec,
++				     struct imac_v11_prepare_diag *diag)
+ {
+ 	unsigned int conv2, conv3, format2, format3;
+ 	unsigned int check2, check3;
+@@ -1982,6 +2081,12 @@
+ 					   AC_VERB_GET_STREAM_FORMAT, 0) & 0xffff;
+ 	format3 = snd_hda_codec_read(codec, 0x03, 0,
+ 					   AC_VERB_GET_STREAM_FORMAT, 0) & 0xffff;
++	if (diag) {
++		diag->dac02_stream = conv2;
++		diag->dac02_format = format2;
++		diag->dac03_stream = conv3;
++		diag->dac03_format = format3;
++	}
+ 
+ 	codec_info(codec,
+ 		   "iMac 4ch converter state: 0x02 stream=0x%02x format=0x%04x, 0x03 stream=0x%02x format=0x%04x\n",
+@@ -1991,6 +2096,8 @@
+ 	    (conv2 & 0xf0) != (conv3 & 0xf0) ||
+ 	    (conv2 & 0x0f) != 0 || (conv3 & 0x0f) != 2 ||
+ 	    !format2 || format2 != format3) {
++		if (diag)
++			diag->dac_validation = IMAC_V11_DAC_INVALID;
+ 		codec_warn(codec,
+ 			   "iMac 4ch converter topology unexpected; synchronization skipped\n");
+ 		return;
+@@ -2016,9 +2123,114 @@
+ 	    (snd_hda_codec_read(codec, 0x02, 0,
+ 				 AC_VERB_GET_STREAM_FORMAT, 0) & 0xffff) != format2 ||
+ 	    (snd_hda_codec_read(codec, 0x03, 0,
+-				 AC_VERB_GET_STREAM_FORMAT, 0) & 0xffff) != format3)
++				 AC_VERB_GET_STREAM_FORMAT, 0) & 0xffff) != format3) {
++		if (diag)
++			diag->dac_validation = IMAC_V11_DAC_RESTORE_MISMATCH;
+ 		codec_warn(codec,
+ 			   "iMac 4ch converter restore verification failed\n");
++	} else if (diag) {
++		diag->dac_validation = IMAC_V11_DAC_RESTORED;
++	}
++}
++
++static const char *
++imac_v11_dac_validation_name(enum imac_v11_dac_validation validation)
++{
++	switch (validation) {
++	case IMAC_V11_DAC_INVALID:
++		return "invalid-skipped";
++	case IMAC_V11_DAC_RESTORED:
++		return "valid-restored";
++	case IMAC_V11_DAC_RESTORE_MISMATCH:
++		return "restore-mismatch";
++	case IMAC_V11_DAC_UNAVAILABLE:
++	default:
++		return "unavailable";
++	}
++}
++
++static void imac_v11_log_prepare(struct hda_codec *codec,
++				 struct imac_v11_prepare_diag *diag,
++				 const char *stage, int ret)
++{
++	unsigned int tas_valid;
++
++	codec_info(codec,
++		   "iMac V11 diag: prepare stage=%s ret=%d ch=%u rate=%u pcm_fmt=%d stream_tag=0x%x hda_fmt=0x%x init_error=%d active_streams=0x%x playback_started=%u branch=%s\n",
++		   stage, ret, diag->channels, diag->rate, diag->pcm_format,
++		   diag->stream_tag, diag->hda_format, diag->init_error,
++		   diag->active_streams, diag->playback_started,
++		   diag->channels >= 4 ? "4ch" : "2ch");
++
++	if (diag->channels < 4) {
++		codec_info(codec,
++			   "iMac V11 diag: dac=not-read-this-path validation=not-read-this-path\n");
++	} else if (diag->dac_validation == IMAC_V11_DAC_UNAVAILABLE) {
++		codec_info(codec,
++			   "iMac V11 diag: dac=unavailable validation=unavailable\n");
++	} else {
++		codec_info(codec,
++			   "iMac V11 diag: dac02_stream=0x%02x dac02_fmt=0x%04x dac03_stream=0x%02x dac03_fmt=0x%04x validation=%s\n",
++			   diag->dac02_stream, diag->dac02_format,
++			   diag->dac03_stream, diag->dac03_format,
++			   imac_v11_dac_validation_name(diag->dac_validation));
++	}
++
++	if (diag->prepare_read_valid == IMAC_V11_PREP_READ_ALL) {
++		codec_info(codec,
++			   "iMac V11 diag: coef01_begin=0x%x gpio=0x%x coef01_end=0x%x\n",
++			   diag->coef01_begin, diag->gpio, diag->coef01_end);
++	} else if (diag->prepare_read_valid) {
++		codec_info(codec,
++			   "iMac V11 diag: existing_reads=partial valid=0x%x raw_coef01_begin=0x%x raw_gpio=0x%x raw_coef01_end=0x%x\n",
++			   diag->prepare_read_valid, diag->coef01_begin,
++			   diag->gpio, diag->coef01_end);
++	} else {
++		codec_info(codec, "iMac V11 diag: existing_reads=unavailable\n");
++	}
++
++	tas_valid = diag->tas[0].valid | diag->tas[1].valid |
++		    diag->tas[2].valid | diag->tas[3].valid;
++	if (diag->tas[0].valid == IMAC_V11_TAS_READ_ALL &&
++	    diag->tas[1].valid == IMAC_V11_TAS_READ_ALL &&
++	    diag->tas[2].valid == IMAC_V11_TAS_READ_ALL &&
++	    diag->tas[3].valid == IMAC_V11_TAS_READ_ALL) {
++		codec_info(codec,
++			   "iMac V11 diag: tas d8=%02x,%02x,%02x,%02x,%02x,%02x da=%02x,%02x,%02x,%02x,%02x,%02x dc=%02x,%02x,%02x,%02x,%02x,%02x de=%02x,%02x,%02x,%02x,%02x,%02x\n",
++			   diag->tas[0].power, diag->tas[0].digital,
++			   diag->tas[0].channel, diag->tas[0].volume,
++			   diag->tas[0].analog, diag->tas[0].config,
++			   diag->tas[1].power, diag->tas[1].digital,
++			   diag->tas[1].channel, diag->tas[1].volume,
++			   diag->tas[1].analog, diag->tas[1].config,
++			   diag->tas[2].power, diag->tas[2].digital,
++			   diag->tas[2].channel, diag->tas[2].volume,
++			   diag->tas[2].analog, diag->tas[2].config,
++			   diag->tas[3].power, diag->tas[3].digital,
++			   diag->tas[3].channel, diag->tas[3].volume,
++			   diag->tas[3].analog, diag->tas[3].config);
++	} else if (tas_valid) {
++		codec_info(codec,
++			   "iMac V11 diag: tas=partial valid=%02x,%02x,%02x,%02x\n",
++			   diag->tas[0].valid, diag->tas[1].valid,
++			   diag->tas[2].valid, diag->tas[3].valid);
++	} else {
++		codec_info(codec, "iMac V11 diag: tas=unavailable\n");
++	}
++
++	if (diag->side_read_valid == IMAC_V11_SIDE_READ_ALL) {
++		codec_info(codec,
++			   "iMac V11 diag: side64_14=0x%x side28_05=0x%x side28_04=0x%x\n",
++			   diag->side64_14, diag->side28_05,
++			   diag->side28_04);
++	} else if (diag->side_read_valid) {
++		codec_info(codec,
++			   "iMac V11 diag: side=partial valid=0x%x raw64_14=0x%x raw28_05=0x%x raw28_04=0x%x\n",
++			   diag->side_read_valid, diag->side64_14,
++			   diag->side28_05, diag->side28_04);
++	} else {
++		codec_info(codec, "iMac V11 diag: side=unavailable\n");
++	}
+ }
+ 
+ static int imac_playback_pcm_open(struct hda_pcm_stream *hinfo,
+@@ -2057,43 +2269,73 @@
+ 				     struct snd_pcm_substream *substream)
+ {
+ 	struct cs8409_spec *spec = codec->spec;
++	struct imac_v11_prepare_diag diag = { };
++	struct imac_v11_prepare_diag *v11_diag = NULL;
+ 	unsigned int channels = substream->runtime->channels;
+ 	unsigned int coef, gpio;
+ 	int ret = spec->imac_init_error;
+ 
+-	if (codec->fixup_id == CS8409_FIXUP_IMAC19_2 && ret < 0)
++	if (codec->fixup_id == CS8409_FIXUP_IMAC19_2) {
++		diag.channels = channels;
++		diag.rate = substream->runtime->rate;
++		diag.pcm_format = substream->runtime->format;
++		diag.stream_tag = stream_tag;
++		diag.hda_format = format;
++		diag.init_error = ret;
++		diag.active_streams = spec->gen.active_streams;
++		diag.playback_started = spec->playback_started;
++		v11_diag = &diag;
++	}
++
++	if (codec->fixup_id == CS8409_FIXUP_IMAC19_2 && ret < 0) {
++		imac_v11_log_prepare(codec, v11_diag, "init-error", ret);
+ 		return ret;
++	}
+ 
+ 	ret = snd_hda_multi_out_analog_prepare(codec, &spec->gen.multiout,
+ 					       stream_tag, format, substream);
+-	if (ret < 0)
++	if (ret < 0) {
++		if (v11_diag)
++			imac_v11_log_prepare(codec, v11_diag,
++					     "generic-prepare", ret);
+ 		return ret;
++	}
+ 
+ 	imac_i2c_begin(codec, false);
+ 	coef = imac_cs8409_coef_read(codec, 0x0001);
+ 	gpio = snd_hda_codec_read(codec, codec->core.afg, 0,
+ 				  AC_VERB_GET_GPIO_DATA, 0);
++	if (v11_diag) {
++		diag.coef01_begin = coef;
++		diag.gpio = gpio;
++		diag.prepare_read_valid |= IMAC_V11_PREP_READ_COEF01_BEGIN |
++					   IMAC_V11_PREP_READ_GPIO;
++	}
+ 	codec_dbg(codec, "iMac playback PREPARE COEF 0x0001 = 0x%x\n", coef);
+ 	codec_dbg(codec, "iMac playback PREPARE GPIO DATA = 0x%x\n", gpio);
+ 
+ 	codec_info(codec, "iMac playback prepare TDM refresh start\n");
+ 	imac_cs8409_tdm_setup_amps12(codec);
+ 
+-	ret = imac_tas576_tdm_slot_setup(codec);
++	ret = imac_tas576_tdm_slot_setup(codec, v11_diag);
+ 	if (ret < 0) {
+ 		codec_err(codec, "iMac playback TAS prepare failed: %d\n", ret);
++		if (v11_diag)
++			imac_v11_log_prepare(codec, v11_diag, "tas", ret);
+ 		return ret;
+ 	}
+ 
+-	ret = imac_tdm_extra_sync_setup(codec);
++	ret = imac_tdm_extra_sync_setup(codec, v11_diag);
+ 	if (ret < 0) {
+ 		codec_err(codec, "iMac playback required legacy I2C sequence failed: %d\n",
+ 			  ret);
++		if (v11_diag)
++			imac_v11_log_prepare(codec, v11_diag, "side-device", ret);
+ 		return ret;
+ 	}
+ 
+ 	if (channels >= 4)
+-		imac_sync_4ch_converters(codec);
++		imac_sync_4ch_converters(codec, v11_diag);
+ 	else
+ 		codec_dbg(codec,
+ 			  "iMac 2ch playback: skip forced DAC stream/channel restore\n");
+@@ -2106,16 +2348,24 @@
+ 	ret = imac_cs42l83_buffers_on(codec);
+ 	if (ret < 0) {
+ 		codec_err(codec, "iMac playback CS42L83 buffer enable failed: %d\n", ret);
++		if (v11_diag)
++			imac_v11_log_prepare(codec, v11_diag, "cs42-buffer", ret);
+ 		return ret;
+ 	}
+ 
+ 	snd_hda_codec_write(codec, 0x0a, 0,
+ 			    AC_VERB_SET_CHANNEL_STREAMID, 0x00);
+ 	coef = imac_cs8409_coef_read(codec, 0x0001);
++	if (v11_diag) {
++		diag.coef01_end = coef;
++		diag.prepare_read_valid |= IMAC_V11_PREP_READ_COEF01_END;
++	}
+ 	codec_dbg(codec, "iMac playback PREPARE END COEF 0x0001 = 0x%x\n", coef);
+ 
+ 	spec->playback_started = 1;
+ 	codec_info(codec, "iMac playback prepare TDM refresh end\n");
++	if (v11_diag)
++		imac_v11_log_prepare(codec, v11_diag, "complete", 0);
+ 	return 0;
+ }
+ 
