@@ -37,8 +37,9 @@ always 0 at resume entry and the disable transition is guaranteed to occur.
 
 First observation timing, both epochs: the deferred
 `cs8409_disable_i2c_clock_worker`, approximately 25 ms after the final INIT
-I2C transaction. On cold boot this is also the first-ever driver read of
-coefficient 0 in that boot. Steady-state cycles then alternate:
+I2C transaction. On cold boot this is the first D12-observed coefficient-0
+read from the normal I2C clock-gating path after iMac INIT. Steady-state
+cycles then alternate:
 enable reads `base`, writes `base|0x8`; disable reads `base|0x8`, writes
 `base`.
 
@@ -100,11 +101,14 @@ transitions execute identically: zero verbs, zero lines.
 
 Compare one known-good baseline epoch with one post-S3 epoch using the
 decision matrix in docs/NEXT-EXPERIMENTS.md. Because suspend's explicit
-disable clears bit 3 before sleep, a fully retained machine must show bit 3
-equal to 0 in the first post-resume sample; retained PLL/power-like bits with
-lost bit-3 state, or wholesale decayed values, discriminate differently per
-that matrix. A negative-error-derived garbage pattern in the log indicates an
-I2C-clock transaction failure at the observation point, not register content.
+disable clears bit 3 before sleep, if coefficient 0 is retained unchanged
+across S3 and no autonomous hardware transition modifies it, bit 3 is
+expected to remain 0 in the first post-resume sample; retained
+PLL/power-like bits with lost bit-3 state, or wholesale decayed values,
+discriminate differently per that matrix. An invalid/error-derived
+coefficient value would indicate failure or an invalid response in the HDA
+vendor-coefficient read path at the observation point; it does not by itself
+indicate an external I2C transaction failure.
 
 This experiment cannot establish field semantics, safe restore values, or
 44.1-kHz ordering. It must not motivate any DEV_CFG1 write without the full
