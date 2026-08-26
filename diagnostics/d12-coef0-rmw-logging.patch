@@ -1,0 +1,35 @@
+--- a/driver/source/cs8409.c
++++ b/driver/source/cs8409.c
+@@ -209,13 +209,27 @@
+ static void cs8409_disable_i2c_clock(struct hda_codec *codec)
+ {
+ 	struct cs8409_spec *spec = codec->spec;
++	unsigned int coef_old = 0;
++	unsigned int coef_new = 0;
++	bool rmw_done = false;
+ 
+-	guard(mutex)(&spec->i2c_mux);
+-	if (spec->i2c_clck_enabled) {
+-		cs8409_vendor_coef_set(spec->codec, 0x0,
+-			       cs8409_vendor_coef_get(spec->codec, 0x0) & 0xfffffff7);
+-		spec->i2c_clck_enabled = 0;
++	/* Nested scope: i2c_mux is released before the D12 diagnostic print. */
++	{
++		guard(mutex)(&spec->i2c_mux);
++
++		if (spec->i2c_clck_enabled) {
++			coef_old = cs8409_vendor_coef_get(spec->codec, 0x0);
++			coef_new = coef_old & 0xfffffff7;
++			cs8409_vendor_coef_set(spec->codec, 0x0, coef_new);
++			spec->i2c_clck_enabled = 0;
++			rmw_done = true;
++		}
+ 	}
++
++	if (rmw_done && codec->fixup_id == CS8409_FIXUP_IMAC19_2)
++		codec_info(codec,
++			   "iMac D12 diag: disable-path coef0 old=0x%08x new=0x%08x\n",
++			   coef_old, coef_new);
+ }
+ 
+ /*
