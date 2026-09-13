@@ -70,6 +70,12 @@ installed 24G90 System/SSV, x86_64 dyld cache, coreaudiod, CoreAudio and
 AudioToolbox runtimes, and normal userspace scheduler. Continue only when the
 [24G90 artifact](HELP-WANTED-24G90.md) is authenticated.
 
+**Next valid research step:** obtain an authenticated macOS Sequoia 15.6.1
+build 24G90 Intel installed-System userspace artifact, preferably the complete
+read-only System/SSV, or the complete matching x86_64 dyld cache and required
+standalone audio runtime. Do not continue reverse engineering the Recovery-only
+corpus in the hope of inferring the missing normal producer.
+
 ## Non-negotiable boundaries
 
 - no Apple proprietary binary, raw executable bytes, or raw disassembly in Git;

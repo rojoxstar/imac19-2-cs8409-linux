@@ -21,7 +21,7 @@ than copying internal reports or proprietary evidence.
 | V21 | memory exposure | output base/lattice and history copies | copy overlap semantics |
 | V22 | copy helper | `memmove` binding and exact history recurrence | parent exposure |
 | V23 | parent exposure | parent write mapping recovered | unconditional lattice proof |
-| V24 | lattice coverage | complete/unique iff `R=0` or `M>0`; unsafe domain isolated | production reachability of `M=0,R>0` |
+| V24 | lattice coverage | complete/unique iff `R=0` or `M>0`; unresolved domain isolated | production reachability of `M=0,R>0` |
 | V25 | upstream count | frame-count contract narrowed | callback scheduler |
 | V26 | scheduler contract | cross-block/count cases enumerated | concrete producer |
 | V27 | stream vtable | relevant stream dispatch identified | callback owner |
