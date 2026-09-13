@@ -1,5 +1,10 @@
 # Ranked open questions
 
+> **Historical scope:** this ranking records the earlier S3 investigation.
+> S3 remains unsupported, but it is not the current publication's active
+> research priority. The current clean-room Apple-DSP blocker is documented in
+> [`apple-dsp/CURRENT-BLOCKER.md`](apple-dsp/CURRENT-BLOCKER.md).
+
 This is the remaining unknown-state map after the public-source survey. A high
 rank means information value, not permission to touch hardware.
 

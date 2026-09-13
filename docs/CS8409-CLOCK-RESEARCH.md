@@ -1,5 +1,11 @@
 # CS8409 clock, coefficient and PM research
 
+> Later evidence: the iMac19,2-only restoration candidate observed DEV_CFG1
+> transitions `0→0x1000`, `0x8000→0x9000`, and `0x9000→0x9000`. Playback
+> continued after the bounded resume observation. This supports restoring
+> PLL1 bit 12 defensively, but does not prove necessity, sufficiency, or an
+> audio-quality benefit. See [current status](CURRENT-STATUS.md).
+
 This is the public-source state of knowledge for CS8409 coefficient 0
 (`DEV_CFG1`), PLL/ASP clocking and the iMac19,2 S3 restoration gap. It does not
 authorize a coefficient write.

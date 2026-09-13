@@ -231,9 +231,9 @@ The branch adds:
 - [the D12 source-contract tests](../tests/test_d12_diagnostic.py);
 - this final review document.
 
-Machine-local fail-closed transaction tooling was added outside Git at
-`/home/rjx/imac-audio-work/local-d12-transaction/`; it is intentionally not a
-public or production repository change.
+Machine-local fail-closed transaction tooling was added outside Git under a
+private work directory; its user-specific path is intentionally omitted and it
+is not a public or production repository change.
 
 Source proof:
 
@@ -297,7 +297,7 @@ historical V6/V7/V8/V9 preservation cases.
 - Path:
   `/lib/modules/7.0.0-30-generic/updates/snd-hda-codec-cs8409.ko`
 - Build candidate:
-  `/home/rjx/imac-audio-work/.phase20-public-repo/build/d12/7.0.0-30-generic/candidate/snd-hda-codec-cs8409-d12.ko`
+  `build/d12/7.0.0-30-generic/candidate/snd-hda-codec-cs8409-d12.ko`
 - SHA256:
   `c7bdf9b22b257689025113c07f6f41d42d0ae0a06af3b41436bc24f91a53bbbd`
 - srcversion: `9CA970DA548E489033CA2FD`
@@ -367,7 +367,7 @@ Verified SHA256:
 Exact rollback command:
 
 ```bash
-pkexec /home/rjx/imac-audio-work/local-d12-transaction/rollback.sh \
+pkexec /path/to/private/local-d12-transaction/rollback.sh \
   --restore-exact-v10
 ```
 

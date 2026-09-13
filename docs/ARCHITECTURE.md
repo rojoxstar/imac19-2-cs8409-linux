@@ -39,6 +39,8 @@ functional amplifier clocks, power-stage state, or audible output.
 
 ## Power management
 
-Runtime autosuspend is operationally validated. System S3 is not: the
+Runtime autosuspend is operationally validated. System S3 is not release-qualified: the
 controller stream resumes and DMA advances, but the downstream speaker path
-is silent. See `S3-INVESTIGATION.md`.
+was silent. Later bounded work observed PLL1-bit restoration and audible
+post-resume playback, without proving necessity or sufficiency. See
+`S3-INVESTIGATION.md` and `CURRENT-STATUS.md`.

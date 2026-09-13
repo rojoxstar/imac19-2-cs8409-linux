@@ -1,5 +1,11 @@
 # TAS5764L and amplifier-state research
 
+> **Safety boundary:** register `0x04 = 0xab` must not be described as a
+> proven TAS5764L gain value. The often-quoted `-18 dB` result follows the
+> published TAS5760M/TAS5722L-style `0xcf = 0 dB`, `0.5 dB/code` mapping and
+> is an **analogy only**. No exact public TAS5764L register authority has been
+> recovered, and this repository does not recommend changing the value.
+
 The four exact iMac19,2 amplifier addresses are part of the proven driver and
 derived vendor configuration. Their public silicon identity is strongly
 supported as TAS5764L, but no public TAS5764L datasheet or register map was

@@ -1,5 +1,9 @@
 # S3 root-cause hypotheses
 
+> **Historical scope:** this document freezes the earlier S3 hypothesis tree.
+> Later local evidence showed that restoring the observed PLL1 state was not
+> sufficient to establish an S3 fix; see [`CURRENT-STATUS.md`](CURRENT-STATUS.md).
+
 This document prioritizes explanations for the one reproduced iMac19,2 S3
 failure. It is a research map, not a patch proposal. System S3 remains
 unsupported and no hardware write is authorized by this ranking.

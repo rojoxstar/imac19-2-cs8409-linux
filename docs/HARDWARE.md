@@ -7,7 +7,8 @@
 | Computer | Apple iMac19,2, 21.5-inch 2019 | Machine-observed |
 | HDA codec | Cirrus Logic CS8409, `1013:8409` | PROVEN |
 | Codec subsystem | `106b:0f00` | PROVEN |
-| Tested kernel | `7.0.0-30-generic` | PROVEN |
+| Historical V10 kernel | `7.0.0-30-generic` | PROVEN |
+| Current local tested kernel | `7.0.0-31-generic` | OBSERVED; binary identity recorded separately |
 | Internal amplifiers | Four devices at driver addresses `d8/da/dc/de` | PROVEN transaction topology |
 | Playback rate | 44.1 kHz only | PROVEN source and runtime |
 | PCM container | S32_LE, 32-bit maximum sample width | PROVEN source |
