@@ -72,3 +72,23 @@ Contributions and exact-hardware observations are welcome. Read
 The combined Linux driver work is distributed under **GPL-2.0-only**. Original
 SPDX headers remain on copied kernel files. See
 [license provenance](docs/LICENSE-PROVENANCE.md).
+
+
+Want to test this on another iMac19,2?
+
+The repository currently does not provide a generic installer or prebuilt kernel module.
+
+This is intentional: the driver is experimental, kernel-specific, and has only been validated on an exact iMac19,2 (106b:0f00). Installing an incompatible out-of-tree audio module can leave the system without working audio or require manual rollback.
+
+If you have an iMac19,2 and want to help test the driver, please open a GitHub issue and include:
+
+Linux distribution
+uname -r
+iMac model identifier
+CS8409 PCI/subsystem identification
+current internal-speaker behavior
+whether you can boot a fallback kernel if necessary
+
+I will first verify that your machine matches the validated hardware path before suggesting any installation procedure.
+
+A fail-closed public testing/install path with automatic compatibility checks, backup and rollback is planned. Until then, please do not manually replace snd-hda-codec-cs8409.ko using commands copied from unrelated CS8409 projects.
