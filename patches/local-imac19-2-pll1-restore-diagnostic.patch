@@ -1,0 +1,49 @@
+--- a/driver/source/cs8409.c
++++ b/driver/source/cs8409.c
+@@ -140,6 +140,36 @@ static void imac_enable_i2c(struct hda_codec *codec)
+ 	spec->i2c_clck_enabled = 1;
+ }
+ 
++/*
++ * D12 measured DEV_CFG1=0x900x during working playback and 0x800x after
++ * system S3.  Cirrus-authored CS8409 tables identify the missing BIT(12) as
++ * the PLL1 enable which supplies the ASP clock domain; the validated 44.1-kHz
++ * dividers live in separate coefficients.  Restore only that observed bit,
++ * preserve every other DEV_CFG1 field, and do it before replaying ASP/TDM.
++ */
++static void imac19_2_restore_pll1(struct hda_codec *codec)
++{
++	struct cs8409_spec *spec = codec->spec;
++	unsigned int old_cfg;
++	unsigned int new_cfg;
++	bool changed;
++
++	/* Serialize the shared coefficient index against delayed I2C clock work. */
++	{
++		guard(mutex)(&spec->i2c_mux);
++
++		old_cfg = cs8409_vendor_coef_get(codec, CS8409_DEV_CFG1);
++		new_cfg = old_cfg | BIT(12);
++		changed = new_cfg != old_cfg;
++		if (changed)
++			cs8409_vendor_coef_set(codec, CS8409_DEV_CFG1, new_cfg);
++	}
++
++	codec_info(codec,
++		   "iMac19,2 PLL1 restore: DEV_CFG1 old=0x%08x new=0x%08x changed=%u\n",
++		   old_cfg, new_cfg, changed);
++}
++
+ static void imac_gpio_reset(struct hda_codec *codec)
+ {
+ 	codec_info(codec, "iMac gpio reset start\n");
+@@ -1567,6 +1597,9 @@ static int imac_hw_init(struct hda_codec *codec)
+ 
+ 	codec_info(codec, "iMac amp init start\n");
+ 
++	if (codec->fixup_id == CS8409_FIXUP_IMAC19_2)
++		imac19_2_restore_pll1(codec);
++
+ 	imac_cs8409_tdm_setup_amps12(codec);
+ 	imac_enable_i2c(codec);
+ 	imac_gpio_reset(codec);

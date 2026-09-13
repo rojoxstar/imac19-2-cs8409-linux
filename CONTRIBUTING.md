@@ -19,3 +19,14 @@ proof that an amplifier is operational.
 Do not attach proprietary Boot Camp packages, Apple/Cirrus binaries, private
 logs, module binaries, machine identifiers, or credentials to issues or pull
 requests.
+
+Apple DSP research contributions must contain only clean-room authored
+reports, mathematics, scripts, tests, or provenance metadata. Do not commit
+Apple binaries, executable sections, raw disassembly, KernelCollections, dyld
+caches, disk images, recordings, personal data, or secrets. See
+[`docs/apple-dsp/CONTRIBUTING.md`](docs/apple-dsp/CONTRIBUTING.md) and the
+[24G90 help request](docs/HELP-WANTED-24G90.md).
+
+Never test or recommend speculative TAS5764L gain values. In particular,
+`0xCF` is not established safe for TAS5764L merely because another TI part has
+a documented mapping.

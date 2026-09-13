@@ -1,5 +1,11 @@
 # S3 evidence matrix
 
+Later evidence supplement: DEV_CFG1 was observed as `0→0x1000`,
+`0x8000→0x9000`, and `0x9000→0x9000` under the iMac19,2 PLL1-bit restoration
+candidate. Playback continued after the bounded resume observation. This
+updates the historical statement that resume always stays silent, but does not
+establish a causal or complete S3 fix.
+
 This ledger separates what the one controlled S3 experiment established from
 what remains inferred. It is deliberately conservative: a successful write or
 trace at one boundary does not prove the next boundary.

@@ -2,13 +2,20 @@
 
 ## Release blockers and boundaries
 
-- System S3 suspend/resume and hibernate are unsupported. Playback can be
-  totally silent after resume while DMA advances.
+- System S3 suspend/resume and hibernate remain unsupported for release use.
+  One earlier cycle produced total silence while DMA advanced. Later bounded
+  experiments observed DEV_CFG1 PLL1-bit restoration and continued playback,
+  but did not prove the restore necessary or sufficient.
 - Only ordinary internal-speaker playback on one exact iMac19,2 and kernel is
   release-qualified.
-- 44.1 kHz is the only exposed/tested playback rate.
+- The ALSA/HDA playback endpoint is 44.1 kHz. An optional PipeWire policy can
+  select 44.1- or 48-kHz graph domains; 48-kHz material still crosses one
+  48→44.1 conversion before hardware.
 - Capture is source-hardened but not equivalently release-qualified.
 - No DSP or EasyEffects configuration is part of this driver release.
+- Reconstructed Apple speaker DSP remains offline research. Child-SRC contract
+  completeness is 88%, DualBand safety-bound completeness is 74%, and
+  whole-chain digital headroom remains partial.
 
 ## Evidence limitations
 
@@ -26,6 +33,5 @@
 
 ## Operational mitigation
 
-Prevent all automatic and manual system suspend/hibernate paths while using
-V10. Screen blanking can remain enabled. This avoids the known trigger; it is
-not a driver fix.
+Treat system suspend/hibernate as unqualified. Screen blanking is independent.
+The PLL1 state-restoration patch is research evidence, not a qualified S3 fix.

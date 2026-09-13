@@ -1,0 +1,20 @@
+{
+  "schema": "imac19-2-apple-dsp-public-status-v1",
+  "target": {"model": "iMac19,2", "macos_version": "15.6.1", "macos_build": "24G90", "architecture": "x86_64"},
+  "topology": {
+    "internal_order": ["TL", "TR", "WL", "WR"],
+    "output_order": ["TL", "WL", "RT", "RW"],
+    "tas_addresses": {"0xd8": "left_tweeter", "0xda": "left_woofer", "0xdc": "right_tweeter", "0xde": "right_woofer"},
+    "dualband_is_physical_crossover": false
+  },
+  "control_src": {
+    "q": 31, "canonical_p": 4, "reset_phase": 0,
+    "child_a_control": 0.0, "child_b_control": 1.0,
+    "history_recurrence": "H_next = concat(H, X)[M:M+P]",
+    "coverage_condition": "R == 0 or M > 0",
+    "unresolved_domain": "R > 0 and M == 0",
+    "production_reachability": "UNKNOWN"
+  },
+  "completeness": {"child_src_percent": 88, "dualband_safety_percent": 74, "whole_chain_headroom": "PARTIAL", "protection_safe_for_playback": false},
+  "blocker": {"corpus": "RECOVERY-ONLY", "missing": "authenticated 24G90 x86_64 installed-System CoreAudio normal request producer"}
+}

@@ -1,5 +1,10 @@
 # Next high-information experiments
 
+> **Historical scope:** these are unexecuted S3 experiment designs from an
+> earlier phase. They are not current instructions or authorization. Current
+> work is silent/offline and is indexed in
+> [`apple-dsp/PHASE-INDEX.md`](apple-dsp/PHASE-INDEX.md).
+
 No experiment in this file is authorized. Each physical run needs a separate
 review, exact rollback and explicit authorization. The design goal is maximum
 information from values or events already produced by normal execution, with

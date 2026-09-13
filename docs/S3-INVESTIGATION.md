@@ -1,5 +1,11 @@
 # System S3 investigation
 
+> Current correction: this document records the original reproduced silent
+> cycle. Later experiments observed DEV_CFG1 transitions `0→0x1000` and
+> `0x8000→0x9000`, plus continued playback after resume. The PLL1 restoration
+> remains neither necessary nor sufficient by proof; S3 is still unqualified.
+> See [current status](CURRENT-STATUS.md).
+
 ## Outcome
 
 **System S3 is unsupported.** One controlled cycle was reproduced with

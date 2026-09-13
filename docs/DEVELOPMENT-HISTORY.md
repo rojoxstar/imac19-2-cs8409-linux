@@ -1,5 +1,14 @@
 # Development history
 
+## Current research publication
+
+The source lineage after the public S3 research head adds the D12 existing-read
+diagnostic, its final review, and an iMac19,2-only PLL1 state-restoration patch.
+The current installed kernel-31 module is separately identified in
+[`CURRENT-STATUS.md`](CURRENT-STATUS.md); exact byte correspondence to the
+repository is not claimed. Userspace rate-policy and Apple DSP forensic work
+are documented separately from the kernel driver.
+
 This is a concise semantic history, not the private research workspace or its
 Git history.
 

@@ -1,5 +1,10 @@
 # iMac19,2 audio topology and public hardware evidence
 
+> **Current-status note:** this document preserves the hardware/S3 research
+> context. For the subsequently recovered four-transducer DSP topology and
+> channel order, see [`apple-dsp/TOPOLOGY.md`](apple-dsp/TOPOLOGY.md) and
+> [`CURRENT-STATUS.md`](CURRENT-STATUS.md).
+
 This is a derived factual topology. It does not redistribute Apple/Boot Camp
 binaries, board files or schematics. Where exact iMac19,2 public evidence ends,
 the text says so.

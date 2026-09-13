@@ -1,141 +1,74 @@
 # iMac19,2 CS8409 Linux audio
 
-Experimental Linux HDA codec work for the 2019 21.5-inch Apple iMac19,2 with
-Cirrus Logic CS8409 audio (`1013:8409`, subsystem `106b:0f00`). The canonical
-source in this repository is **V10**, a local daily-driver release candidate
-validated on one exact machine and kernel.
+Experimental Linux HDA codec work for the 2019 21.5-inch iMac19,2: Cirrus
+Logic CS8409 (`1013:8409`, Apple subsystem `106b:0f00`), four TAS5764L
+speaker amplifiers, and a CS42L83 companion codec. Only this exact hardware
+has been validated. This is not a general CS8409 replacement.
 
-This is not a general CS8409 replacement and does not claim support for other
-Macs, other subsystem IDs, or other kernels.
+## Current status
 
-## Status
-
-| Item | Status |
+| Layer | Evidence-backed state |
 |---|---|
-| Canonical release | V10 |
-| Tested kernel | `7.0.0-30-generic` |
-| Tested playback | 44.1 kHz, S32_LE container, stereo |
-| Ordinary playback | Audible, both speakers, centered, clean |
-| Runtime autosuspend | Tested successfully |
-| System S3 suspend/resume | **Unsupported: post-resume playback is silent** |
-| V11 | Diagnostic-only; not the production driver |
+| Historical public baseline | V10 source in [`driver/`](driver/); preserved and SHA-pinned |
+| Local research head at publication | `d6e8df4beda4ae4c7e1ed95e3db314c3a19bf5e9`; its PLL1 change is an external [patch](patches/local-imac19-2-pll1-restore-diagnostic.patch), not applied to `driver/source/` |
+| Tested local kernel | Ubuntu 26.04.1, `7.0.0-31-generic`; internal speakers audible on both sides at 44.1 kHz |
+| Installed local module identity | SHA256 `f791e1c497d797432449e828dc8c41155d5dc266c06e18c1c4acb854ce524d3a`; srcversion `4696DA5BA67978BE4BD703F`; vermagic `7.0.0-31-generic SMP preempt mod_unload modversions` |
+| Source/binary correspondence | The installed binary identity is verified independently; a byte-for-byte build from this published tree has **not** been demonstrated |
+| System S3 | Still unqualified: a prior failure produced silence; later observations include audible resume, but the PLL1 restore is not proved necessary or sufficient |
+| PipeWire | Optional, separately validated dynamic 44.1/48 kHz graph policy; hardware playback endpoint stays 44.1 kHz |
+| Apple speaker DSP research | Topology substantially reconstructed; whole-chain headroom and protection remain partial; no Apple DSP is enabled here |
 
-Canonical V10 identity:
+The driver constrains its playback PCM to 44.1 kHz in an `S32_LE` container.
+The apparent ASP/TDM payload is 24 bits in 32-bit slots; exact amplifier
+internal precision is not established. A native 48-kHz application may run a
+48-kHz PipeWire graph, but the userspace-to-hardware path then includes a
+48→44.1 conversion. See [rate-policy findings](docs/PIPEWIRE-RATE-POLICY.md).
 
-```text
-module SHA256: 8e751170a1006e682a12872464dde89bd1bea08936f48d5165b96f27a241d9b3
-srcversion:     984693ABD54C8FF1DE34E39
-vermagic:       7.0.0-30-generic SMP preempt mod_unload modversions
-module_layout:  0xe9196a28
-```
+Historical V10 local identity on kernel `7.0.0-30-generic` was SHA256
+`8e751170a1006e682a12872464dde89bd1bea08936f48d5165b96f27a241d9b3`,
+srcversion `984693ABD54C8FF1DE34E39`. The module is not distributed. The
+source manifest and [build notes](docs/INSTALL.md) preserve this baseline.
 
-The binary is deliberately not distributed. Its hash identifies the exact
-locally validated build; builds in another path or toolchain may differ at the
-byte level even when the source and `srcversion` match.
+## Hardware safety and limits
 
-## What works
+The current iMac19,2 source writes TAS register `0x04 = 0xAB` during channel
+setup. A TAS5760M register analogy suggests approximately −18 dB relative to
+`0xCF`, but **TAS5764L semantics are not proven by that analogy**. Never try
+speculative TAS gain writes, including `0xCF`, on the speakers. The PLL1 patch
+reads `DEV_CFG1`, ORs only bit 12, and writes only on change; it is a defensive
+state restoration based on observed values, not an audio-quality enhancement
+or a qualified S3 repair. See [current hardware status](docs/CURRENT-STATUS.md).
 
-- ordinary internal-speaker playback on the exact iMac19,2;
-- left/right presence and centered stereo image;
-- 44.1-kHz playback with the proven CS8409 ASP/TDM configuration;
-- OPEN-only probing without activating CS42 buffers;
-- PREPARE/CLEANUP buffer state balancing;
-- fail-closed PCM gates after a required iMac initialization failure;
-- repeated runtime-PM full initialization on the tested system.
+Capture is not equivalently release-qualified. No reconstructed Apple DSP or
+speaker-protection chain is approved for live playback. The acoustic results
+for the rate policy do not validate a future EQ, crossover, or limiter.
 
-## Known limitations
+## Build and research
 
-- **Do not use system suspend, S3, or hibernate.** The reproduced failure is
-  total silence after resume even though HDA DMA advances normally.
-- Only one iMac19,2 / `106b:0f00` machine is validated.
-- Playback is intentionally constrained to 44.1 kHz. No 48-kHz claim exists.
-- Capture has not received equivalent release qualification.
-- TAS5764L register semantics are incomplete; related TAS parts are not an
-  authoritative substitute.
-- Side-device operations are retained from machine-proven behavior even
-  where exact public register semantics are unavailable.
-
-See [Known limitations](docs/KNOWN-LIMITATIONS.md) and the
-[S3 investigation](docs/S3-INVESTIGATION.md).
-
-## Build overview
-
-The source is in [`driver/`](driver/). On the exact tested kernel:
+The frozen V10 tree is in [`driver/`](driver/). Offline checks:
 
 ```sh
 ./scripts/verify-source.sh
 ./scripts/run-offline-tests.sh
-./scripts/build-v10.sh
 ```
 
-These commands do not install or load a module. Build output goes under the
-ignored `build/` directory. See [Build and installation](docs/INSTALL.md).
+The existing `build-v10.sh` targets the historical kernel 7.0.0-30 and does
+not reproduce the installed 7.0.0-31 binary. No module is installed or loaded
+by the commands above. Read [installation cautions](docs/INSTALL.md) before
+using any locally built module.
 
-## Installation overview
+Research entry points: [Apple DSP overview](docs/apple-dsp/README.md),
+[phase index](docs/apple-dsp/PHASE-INDEX.md), [current 24G90 blocker](docs/apple-dsp/CURRENT-BLOCKER.md),
+and [help wanted](docs/HELP-WANTED-24G90.md). The public documents are curated
+technical summaries. They include no Apple executable, raw disassembly, or
+recording. The clean-room work does **not** establish a complete Apple playback
+implementation or speaker safety.
 
-No general-purpose public installer is supplied. The proven private
-transaction tooling was bound to an exact V9-to-V10 machine state and would be
-unsafe when presented as a generic installer. Any installation must first
-establish an exact external rollback backup, confirm the target kernel and
-module topology, stage on the target filesystem, and stop before reboot for a
-separate review.
-
-Read [INSTALL.md](docs/INSTALL.md) before considering any deployment.
-
-## Rollback overview
-
-Rollback means restoring the exact module that was installed immediately
-before a test—not choosing stock, V9, or another historical build by guess.
-The backup must be verified independently before replacement. See
-[ROLLBACK.md](docs/ROLLBACK.md).
-
-## Safety warning
-
-Kernel audio work can produce silence, distortion, unexpectedly high output,
-or an unbootable system. Never infer safe hardware behavior from a successful
-I2C acknowledgement. Do not issue raw HDA, coefficient, GPIO, or I2C writes
-without exact evidence and a separately reviewed experiment.
-
-For the current release candidate, prevent every automatic and manual system
-sleep path. Screen blanking may remain enabled because it is separate from
-system S3.
-
-## Research status
-
-The Phase 20 research set is the current unknown-state map:
-
-- [ranked root-cause hypotheses](docs/RESEARCH-HYPOTHESES.md);
-- [observation/evidence matrix](docs/S3-EVIDENCE-MATRIX.md);
-- [CS8409 clock and PM research](docs/CS8409-CLOCK-RESEARCH.md);
-- [TAS5764L comparative research](docs/TAS5764L-RESEARCH.md);
-- [exact/derived audio topology](docs/IMAC19-2-AUDIO-TOPOLOGY.md);
-- [safe next experiments](docs/NEXT-EXPERIMENTS.md);
-- [ranked open questions](docs/OPEN-QUESTIONS.md).
-
-Significant research claims use six evidence labels:
-
-- **PROVEN** — exact source, exact package mapping, deterministic trace, or a
-  recorded physical outcome;
-- **STRONG EVIDENCE** — independent evidence converges but one exact semantic
-  or direct measurement is missing;
-- **CONSISTENT** — compatible with the facts but weakly discriminated;
-- **WEAK EVIDENCE** — indirect, cross-model or community support only;
-- **SPECULATIVE** — technically possible without direct support;
-- **UNKNOWN** — evidence is insufficient.
-
-V11 diagnostic work and the bounded trace methodology live under
-[`diagnostics/`](diagnostics/). They are not part of the default build.
+Contributions and exact-hardware observations are welcome. Read
+[CONTRIBUTING.md](CONTRIBUTING.md) and the [AI handoff](docs/AI-HANDOFF.md).
 
 ## License
 
-The combined work is distributed under **GPL-2.0-only** because it contains
-Linux source files carrying both `GPL-2.0-only` and
-`GPL-2.0-or-later` SPDX identifiers. Original SPDX headers and Cirrus Logic
-copyright notices are preserved. See [license provenance](docs/LICENSE-PROVENANCE.md).
-
-## Contributions welcome
-
-Careful source review, exact-hardware reports, reproducible offline tests, and
-documentation improvements are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md)
-and [AI-HANDOFF.md](docs/AI-HANDOFF.md) first. Do not broaden hardware claims
-or submit speculative hardware writes.
+The combined Linux driver work is distributed under **GPL-2.0-only**. Original
+SPDX headers remain on copied kernel files. See
+[license provenance](docs/LICENSE-PROVENANCE.md).
