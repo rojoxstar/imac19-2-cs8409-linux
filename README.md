@@ -93,7 +93,3 @@ I will first verify that your machine matches the validated hardware path before
 A fail-closed public testing/install path with automatic compatibility checks, backup, and rollback is planned.
 
 Until then, please **do not manually replace `snd-hda-codec-cs8409.ko` using commands copied from unrelated CS8409 projects**.
-
-I will first verify that your machine matches the validated hardware path before suggesting any installation procedure.
-
-A fail-closed public testing/install path with automatic compatibility checks, backup and rollback is planned. Until then, please do not manually replace snd-hda-codec-cs8409.ko using commands copied from unrelated CS8409 projects.
