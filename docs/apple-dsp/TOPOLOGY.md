@@ -29,4 +29,3 @@ occurs later in per-transducer processing.
 This reflects the recovered generic `Dsp4ChOutput` permutation
 `[TL,TR,WL,WR] → [TL,WL,RT,RW]`. The optimized runtime permutation retains a
 documented caveat and should be rechecked before implementation.
-

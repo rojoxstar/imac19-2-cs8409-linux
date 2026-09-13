@@ -35,4 +35,3 @@ Read [topology](TOPOLOGY.md), the [phase index](PHASE-INDEX.md), and the
 [current blocker](CURRENT-BLOCKER.md). Current evidence-weighted estimates are
 88% for the Child-SRC contract and 74% for DualBand safety bounds. Whole-chain
 digital headroom and protection remain incomplete.
-

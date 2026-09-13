@@ -16,3 +16,9 @@ General Public License version 2 text; `KERNEL-GPL-2.0-SPDX.txt` preserves the
 Linux kernel’s SPDX license metadata and usage guidance.
 
 No proprietary Apple, Boot Camp, or Cirrus binary/package content is included.
+Apple artifacts were used only as static research inputs and are not
+redistributed. The public Apple-DSP reports and mathematical descriptions are
+independently authored clean-room material. Hashes, UUIDs, symbol names, and
+addresses are factual provenance metadata; they do not reproduce executable
+content. No conclusion here makes a broader legal claim about third-party use
+of independently obtained Apple artifacts.

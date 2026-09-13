@@ -12,6 +12,16 @@ dist/
 *.trace
 *.dump
 *.img
+*.dmg
+*.hfs
+*.kc
+dyld_shared_cache_*
+*.macho
+*.memdump
+apple-extracted/
+dyld-cache/
+*.wav
+*.flac
 *.initramfs
 *.bak
 backups/
@@ -24,4 +34,5 @@ bootcamp/
 *.pem
 __pycache__/
 *.pyc
+.pytest_cache/
 *~

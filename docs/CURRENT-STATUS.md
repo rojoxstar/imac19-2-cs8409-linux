@@ -61,4 +61,3 @@ contains `0xCF`. TAS5760M documentation maps these codes to approximately
 −18 dB and 0 dB, respectively, but that is an analogy to another part.
 TAS5764L register semantics remain unproved. No speculative `0x04` value is a
 valid contributor experiment.
-

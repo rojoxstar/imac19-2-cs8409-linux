@@ -26,4 +26,3 @@ Mixed-rate behavior was first-active-stream-wins: later streams resample into
 the active graph domain. Observed graph quantum was 1024 frames at 44.1 kHz
 and 2048 frames at 48 kHz. CPU differences were within experimental
 variability. Persistence was validated after reboot on the tested system.
-

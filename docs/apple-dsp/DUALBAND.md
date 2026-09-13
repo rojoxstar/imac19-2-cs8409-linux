@@ -27,4 +27,3 @@ U = {(p,R) | 1 ≤ p ≤ 30 and 1 ≤ R ≤ 31-p}
 equivalently `R>0 && M=0`. Its production reachability is unknown. It is not
 classified as an Apple bug. The exact userspace request producer is required
 to close that question.
-

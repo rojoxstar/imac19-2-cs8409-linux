@@ -9,4 +9,3 @@ finite inputs under the recovered model, the downstream digital ceiling is
 That ceiling does not prove whole-chain or loudspeaker safety. Upstream
 Mozart, Loudness, DualBand dynamics, profile selection, physical transducer
 limits, and any additional protection behavior must all be accounted for.
-

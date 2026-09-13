@@ -12,4 +12,3 @@ and build metadata. See [help wanted](../HELP-WANTED-24G90.md).
 Until that artifact is available, the Child-SRC contract remains 88%, DualBand
 safety bounds 74%, whole-chain digital headroom partial, and reconstructed
 protection insufficient for a new playback experiment.
-
